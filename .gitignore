@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Hemliga nycklar och miljövariabler
+.env

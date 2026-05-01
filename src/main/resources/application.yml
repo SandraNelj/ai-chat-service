@@ -6,7 +6,7 @@ spring:
 # OpenAI API-konfiguration
 openai:
   api:
-    key: ${OPENAI_API_KEY}
+    key: ${OPENAI_API_KEY:placeholder}
     url: ${OPENAI_API_URL:https://api.openai.com/v1}
     model: gpt-3.5-turbo
 

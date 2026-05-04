@@ -37,7 +37,7 @@ public class ChatService {
     public ChatResponse processMessage(ChatRequest request) {
         String sessionId = request.getSessionId() != null && !request.getSessionId().isBlank()
                 ? request.getSessionId()
-                : "anon-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+                : "anon-" + java.util.UUID.randomUUID();
 
         String systemPrompt = personalityService.getSystemPrompt(request.getPersonality());
 
@@ -57,7 +57,16 @@ public class ChatService {
 
         AiResponseDto aiResponse = aiClientService.callAiApi(aiRequest);
 
+        if (aiResponse == null
+        || aiResponse.getChoices() == null
+        || aiResponse.getChoices().isEmpty()
+        || aiResponse.getChoices().get(0).getMessage() == null
+        || aiResponse.getChoices().get(0).getMessage().getContent() == null) {
+            throw new IllegalStateException("AI-svaret saknar innehåll, försök igen!");
+        }
+
         String aiReply = aiResponse.getChoices().get(0).getMessage().getContent();
+
         conversationRepository.addMessage(sessionId, new Message("assistant", aiReply));
 
         return new ChatResponse(aiReply, request.getPersonality());

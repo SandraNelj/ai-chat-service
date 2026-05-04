@@ -9,8 +9,10 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -26,7 +28,7 @@ public class AiClientService {
     }
 
     @Retryable(
-    retryFor = {WebClientResponseException.class},
+    retryFor = {WebClientResponseException.class, WebClientRequestException.class},
             noRetryFor = {
                     WebClientResponseException.BadRequest.class,
                     WebClientResponseException.Unauthorized.class,
@@ -34,7 +36,7 @@ public class AiClientService {
                     WebClientResponseException.NotFound.class
             },
             maxAttempts = 3,
-            backoff = @Backoff(delay=15000, multiplier = 2)
+            backoff = @Backoff(delay=5000, multiplier = 2)
     )
 
     public AiResponseDto callAiApi(AiRequestDto aiRequestDto) {
@@ -43,7 +45,9 @@ public class AiClientService {
                 .bodyValue(aiRequestDto)
                 .retrieve()
                 .bodyToMono(AiResponseDto.class)
-                .block();
+                .timeout(Duration.ofMillis(20000))
+                .blockOptional()
+                .orElseThrow(() -> new IllegalStateException("AI-svaret var tomt!"));
     }
 
     @Recover

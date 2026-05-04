@@ -1,8 +1,6 @@
 package org.example.aichatservice.repository;
-
 import org.example.aichatservice.model.Message;
 import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +18,7 @@ public class ConversationRepository {
             if (history == null) {
                 history = Collections.synchronizedList(new ArrayList<>());
             }
-            history.add(message);
+            history.add(new Message(message.getRole(), message.getContent()));
 
             if (history.size() > MAX_HISTORY) {
                 history.remove(0);
@@ -35,7 +33,11 @@ public class ConversationRepository {
             return new ArrayList<>();
         }
         synchronized (history) {
-            return new ArrayList<>(history);
+            List <Message> copy = new ArrayList<>(history.size());
+            for (Message message : history) {
+                copy.add(new Message(message.getRole(), message.getContent()));
+            }
+            return copy;
         }
     }
 

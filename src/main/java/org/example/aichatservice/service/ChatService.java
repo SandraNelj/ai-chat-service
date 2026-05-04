@@ -23,45 +23,21 @@ public class ChatService {
 
     private final ConversationRepository conversationRepository;
     private final PersonalityService personalityService;
-    private final WebClient aiWebClient;
+    private final AiClientService aiClientService;
 
     @Value("${openai.api.model}")
     private String model;
 
-    public ChatService(ConversationRepository conversationRepository, PersonalityService personalityService,WebClient aiWebClient) {
+    public ChatService(ConversationRepository conversationRepository, PersonalityService personalityService,AiClientService aiClientService) {
         this.conversationRepository = conversationRepository;
         this.personalityService = personalityService;
-        this.aiWebClient = aiWebClient;
-    }
-
-    @Retryable(
-            retryFor = {WebClientResponseException.class},
-            noRetryFor = {WebClientResponseException.BadRequest.class,
-                WebClientResponseException.Unauthorized.class,
-                WebClientResponseException.Forbidden.class,
-                WebClientResponseException.NotFound.class},
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 15000, multiplier = 2)
-    )
-
-    @Recover
-    public ChatResponse recoverFromAiFailure(WebClientResponseException exception, AiRequestDto aiRequest) {
-        return new ChatResponse("AI-tjänsten är just nu överbelastad. Försök igen om en minut!", "error");
-    }
-
-    public AiResponseDto callAiApi(AiRequestDto aiRequest) {
-        return aiWebClient.post()
-                .uri("/chat/completions")
-                .bodyValue(aiRequest)
-                .retrieve()
-                .bodyToMono(AiResponseDto.class)
-                .block();
+        this.aiClientService = aiClientService;
     }
 
     public ChatResponse processMessage(ChatRequest request) {
-        String sessionId = request.getSessionId() != null
+        String sessionId = request.getSessionId() != null && !request.getSessionId().isBlank()
                 ? request.getSessionId()
-                : "default-session";
+                : "anon-" + java.util.UUID.randomUUID().toString().substring(0, 8);
 
         String systemPrompt = personalityService.getSystemPrompt(request.getPersonality());
 
@@ -73,11 +49,13 @@ public class ChatService {
             messages.add(new MessageDto(message.getRole(), message.getContent()));
         }
 
+        messages.add(new MessageDto("user", request.getMessage()));
+
         conversationRepository.addMessage(sessionId, new Message("user", request.getMessage()));
 
         AiRequestDto aiRequest = new AiRequestDto(model, messages);
 
-        AiResponseDto aiResponse = callAiApi(aiRequest);
+        AiResponseDto aiResponse = aiClientService.callAiApi(aiRequest);
 
         String aiReply = aiResponse.getChoices().get(0).getMessage().getContent();
         conversationRepository.addMessage(sessionId, new Message("assistant", aiReply));

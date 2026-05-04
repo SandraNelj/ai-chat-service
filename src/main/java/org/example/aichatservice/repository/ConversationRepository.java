@@ -4,6 +4,7 @@ import org.example.aichatservice.model.Message;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,16 +16,27 @@ public class ConversationRepository {
     private static final int MAX_HISTORY = 10;
 
     public void addMessage(String sessionId, Message message) {
-        sessionHistory.computeIfAbsent(sessionId,k -> new ArrayList<>()).add(message);
+        sessionHistory.compute(sessionId, (key, history) -> {
+            if (history == null) {
+                history = Collections.synchronizedList(new ArrayList<>());
+            }
+            history.add(message);
 
-        List <Message> history = sessionHistory.get(sessionId);
-        if (history.size() > MAX_HISTORY) {
-            history.remove(0);
-        }
+            if (history.size() > MAX_HISTORY) {
+                history.remove(0);
+            }
+            return history;
+        });
     }
 
     public List<Message> getHistory(String sessionId) {
-        return sessionHistory.getOrDefault(sessionId, new ArrayList<>());
+        List<Message> history = sessionHistory.get(sessionId);
+        if (history == null) {
+            return new ArrayList<>();
+        }
+        synchronized (history) {
+            return new ArrayList<>(history);
+        }
     }
 
     public void clearSession(String sessionId) {

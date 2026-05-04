@@ -14,6 +14,9 @@ public class PersonalityService {
     );
 
     public String getSystemPrompt(String personality) {
+        if (personality == null || personality.isBlank()) {
+            return systemPrompts.get("helper");
+        }
         return systemPrompts.getOrDefault(
                 personality.toLowerCase(),
                 systemPrompts.get("helper"));

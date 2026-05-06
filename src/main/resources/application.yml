@@ -6,9 +6,9 @@ spring:
 # OpenAI API-konfiguration
 openai:
   api:
-    key: ${OPENAI_API_KEY:placeholder}
-    url: ${OPENAI_API_URL:https://api.openai.com/v1}
-    model: gpt-3.5-turbo
+    key: ${OPENAI_API_KEY}
+    url: ${OPENAI_API_URL:https://openrouter.ai/api/v1}
+    model: ${OPENAI_API_MODEL:google/gemini-2.5-flash-lite}
 
 # Server
 server:

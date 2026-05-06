@@ -4,17 +4,22 @@ import org.example.aichatservice.dto.AiRequestDto;
 import org.example.aichatservice.dto.AiResponseDto;
 import org.example.aichatservice.dto.MessageDto;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
-
+import org.springframework.web.client.*;
 import java.util.List;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 public class AiClientService {
+
+    @Value("${openai.api.key}")
+    private String apiKey;
 
     private final RestClient aiRestClient;
 
@@ -27,7 +32,8 @@ public class AiClientService {
 
 
     @Retryable(
-    retryFor = {RestClientException.class},
+    retryFor = {HttpServerErrorException.class, ResourceAccessException.class},
+            noRetryFor =  {HttpClientErrorException.class},
             maxAttempts = 3,
             backoff = @Backoff(delay=5000, multiplier = 2)
     )
@@ -35,6 +41,7 @@ public class AiClientService {
     public AiResponseDto callAiApi(AiRequestDto aiRequest) {
         return aiRestClient.post()
                 .uri("/chat/completions")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .body(aiRequest)
                 .retrieve()
                 .body(AiResponseDto.class);

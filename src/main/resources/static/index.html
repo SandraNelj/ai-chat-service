@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chat Bot</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; }
@@ -22,6 +23,7 @@
         .assistant pre { background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 4px; overflow-x: auto; }
         .assistant code { background: #e8e8e8; padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
         .assistant pre code { background: none; padding: 0; }
+        .error-message { color: #d32f2f; font-style: italic; }
         .info { text-align: center; color: #888; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
@@ -38,8 +40,8 @@
     </div>
     <div class="messages" id="messages"></div>
     <div class="controls">
-        <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="if(event.key==='Enter') sendMessage()">
-        <button onclick="sendMessage()">Send</button>
+        <input type="text" id="messageInput" placeholder="Type your message here...">
+        <button id="sendBtn">Send</button>
     </div>
 </div>
 
@@ -57,25 +59,34 @@
         input.value = '';
 
         try {
-            const response = await fetch('http://localhost:8080/api/v1/chat', {
+            const response = await fetch('/api/v1/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ personality, message, sessionId })
             });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'HTTP ' + response.status);
+            }
+
             const data = await response.json();
-            addMessage('assistant', data.reply);
+            addMessage('assistant', data.reply ?? 'Error: empty response from server.');
         } catch (error) {
-            addMessage('assistant', 'Fel: Kunde inte nå servern.');
+            addMessage('assistant', 'Error: ' + (error.message || 'Could not reach server.'), true);
         }
     }
 
-    function addMessage(role, content) {
+    function addMessage(role, content, isError = false) {
         const messagesDiv = document.getElementById('messages');
         const div = document.createElement('div');
         div.className = 'message ' + role;
+        if (isError) {
+            div.classList.add('error-message');
+        }
 
-        if (role === 'assistant') {
-            div.innerHTML = marked.parse(content);
+        if (role === 'assistant' && !isError) {
+            div.innerHTML = DOMPurify.sanitize(marked.parse(content));
         } else {
             div.textContent = content;
         }
@@ -83,6 +94,11 @@
         messagesDiv.appendChild(div);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
+
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    document.getElementById('messageInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
 </script>
 </body>
 </html>

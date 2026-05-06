@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Bot</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 20px; }
+        .chat-container { border: 1px solid #ccc; border-radius: 8px; padding: 20px; }
+        .controls { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+        select, input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="text"] { flex: 1; }
+        button { padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .messages { border: 1px solid #eee; border-radius: 4px; padding: 10px; min-height: 300px; max-height: 500px; overflow-y: auto; margin-bottom: 10px; }
+        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
+        .user { background: #007bff; color: white; margin-left: auto; }
+        .assistant { background: #f1f1f1; color: #333; }
+        .assistant pre { background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .assistant code { background: #e8e8e8; padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
+        .assistant pre code { background: none; padding: 0; }
+        .info { text-align: center; color: #888; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<h1>AI Chat Bot</h1>
+<div class="chat-container">
+    <div class="controls">
+        <select id="personality">
+            <option value="helper">Assistant</option>
+            <option value="coder">Coder</option>
+            <option value="pirate">Pirate</option>
+        </select>
+        <span id="memory-size">Memory Size: 5</span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="controls">
+        <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    let sessionId = 'web-' + crypto.randomUUID();
+
+    async function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        const personality = document.getElementById('personality').value;
+
+        addMessage('user', message);
+        input.value = '';
+
+        try {
+            const response = await fetch('http://localhost:8080/api/v1/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ personality, message, sessionId })
+            });
+            const data = await response.json();
+            addMessage('assistant', data.reply);
+        } catch (error) {
+            addMessage('assistant', 'Fel: Kunde inte nå servern.');
+        }
+    }
+
+    function addMessage(role, content) {
+        const messagesDiv = document.getElementById('messages');
+        const div = document.createElement('div');
+        div.className = 'message ' + role;
+
+        if (role === 'assistant') {
+            div.innerHTML = marked.parse(content);
+        } else {
+            div.textContent = content;
+        }
+
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+</script>
+</body>
+</html>

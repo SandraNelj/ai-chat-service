@@ -8,12 +8,8 @@ import org.example.aichatservice.model.ChatResponse;
 import org.example.aichatservice.model.Message;
 import org.example.aichatservice.repository.ConversationRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+
 
 import java.util.ArrayList;
 import java.util.List;

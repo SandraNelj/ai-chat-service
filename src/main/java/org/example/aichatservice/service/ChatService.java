@@ -21,7 +21,7 @@ public class ChatService {
     private final PersonalityService personalityService;
     private final AiClientService aiClientService;
 
-    @Value("${openai.api.model}")
+    @Value("${openrouter.api.model}")
     private String model;
 
     public ChatService(ConversationRepository conversationRepository, PersonalityService personalityService,AiClientService aiClientService) {
@@ -50,7 +50,6 @@ public class ChatService {
         conversationRepository.addMessage(sessionId, new Message("user", request.getMessage()));
 
         AiRequestDto aiRequest = new AiRequestDto(model, messages);
-
         AiResponseDto aiResponse = aiClientService.callAiApi(aiRequest);
 
         if (aiResponse == null
@@ -58,14 +57,12 @@ public class ChatService {
         || aiResponse.getChoices().isEmpty()
         || aiResponse.getChoices().get(0).getMessage() == null
         || aiResponse.getChoices().get(0).getMessage().getContent() == null) {
-            throw new IllegalStateException("AI-svaret saknar innehåll, försök igen!");
+            throw new IllegalStateException("AI response is empty. Please try again!");
         }
 
         String aiReply = aiResponse.getChoices().get(0).getMessage().getContent();
-
         conversationRepository.addMessage(sessionId, new Message("assistant", aiReply));
 
         return new ChatResponse(aiReply, request.getPersonality());
-
     }
 }

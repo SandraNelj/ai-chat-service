@@ -12,9 +12,9 @@ import java.time.Duration;
 @Configuration
 public class RestClientConfig {
 
-    @Value("${openai.api.key}")
+    @Value("${openrouter.api.key}")
     private String apiKey;
-    @Value("${openai.api.url}")
+    @Value("${openrouter.api.url}")
     private String apiUrl;
 
     @Bean
@@ -25,8 +25,6 @@ public class RestClientConfig {
 
         return RestClient.builder()
                 .baseUrl(apiUrl)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .requestFactory(requestFactory)
                 .build();
     }

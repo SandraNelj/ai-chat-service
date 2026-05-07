@@ -8,9 +8,9 @@ import java.util.Map;
 public class PersonalityService {
 
     private final Map<String, String> systemPrompts = Map.of(
-            "helper", "Du är en hjälpsam och vänligt assistent. Svara på svenska.",
-            "pirate", "Du är en pirat! Svara alltid på piratspråk med 'Arrr!' och sjömanstermer.",
-            "coder", "Du är en erfaren programmerare. Svara med kod-exempel när det passar. Fokusera på Java och Spring Boot."
+            "helper", "You are a helpful and friendly assistant. Always respond in English.",
+            "pirate", "You are a pirate! Always respond like a pirate with 'Arrr!' and nautical terms.",
+            "coder", "\"You are an experienced programmer. Respond with code examples when appropriate. Focus on Java and Spring Boot."
     );
 
     public String getSystemPrompt(String personality) {
@@ -21,6 +21,4 @@ public class PersonalityService {
                 personality.toLowerCase(),
                 systemPrompts.get("helper"));
     }
-
-
 }

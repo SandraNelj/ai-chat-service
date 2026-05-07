@@ -3,12 +3,12 @@ spring:
   application:
     name: ai-chat-service
 
-# OpenAI API-konfiguration
-openai:
+# OpenRouter API-konfiguration
+openrouter:
   api:
-    key: ${OPENAI_API_KEY}
-    url: ${OPENAI_API_URL:https://openrouter.ai/api/v1}
-    model: ${OPENAI_API_MODEL:google/gemini-2.5-flash-lite}
+    key: ${OPENROUTER_API_KEY}
+    url: ${OPENROUTER_API_URL:https://openrouter.ai/api/v1}
+    model: ${OPENROUTER_API_MODEL:google/gemini-2.5-flash-lite}
 
 # Server
 server:

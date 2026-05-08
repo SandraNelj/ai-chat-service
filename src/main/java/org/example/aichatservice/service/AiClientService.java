@@ -5,6 +5,7 @@ import org.example.aichatservice.dto.AiResponseDto;
 import org.example.aichatservice.dto.MessageDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -18,12 +19,12 @@ import org.springframework.web.client.HttpClientErrorException;
 @Service
 public class AiClientService {
 
-    @Value("${openai.api.key}")
+    @Value("${openrouter.api.key}")
     private String apiKey;
 
     private final RestClient aiRestClient;
 
-    @Value("${openai.api.model}")
+    @Value("${openrouter.api.model}")
     private String model;
 
     public AiClientService(RestClient aiRestClient) {
@@ -42,6 +43,7 @@ public class AiClientService {
         return aiRestClient.post()
                 .uri("/chat/completions")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(aiRequest)
                 .retrieve()
                 .body(AiResponseDto.class);
@@ -52,7 +54,7 @@ public class AiClientService {
         AiResponseDto fallbackResponse = new AiResponseDto();
         AiResponseDto.Choice choice = new AiResponseDto.Choice();
         MessageDto message = new MessageDto("assistant",
-                "AI-tjänsten är just nu otillgänglig. Försök igen om en minut!");
+                "The AI service is currently unavailable. Please try again in a minute.");
         choice.setMessage(message);
         fallbackResponse.setChoices(List.of(choice));
         return fallbackResponse;

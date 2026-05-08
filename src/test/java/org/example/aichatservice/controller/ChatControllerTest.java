@@ -5,6 +5,7 @@ import org.example.aichatservice.service.ChatService;
 import org.junit.jupiter.api.*;
 import org.springframework.http.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -18,7 +19,7 @@ class ChatControllerTest {
     @Test
     void shouldReturnChatResponse() {
         when(chatService.processMessage(any(ChatRequest.class)))
-                .thenReturn(new ChatResponse("Hej! Hur kan jag hjälpa dig?", "helper"));
+                .thenReturn(new ChatResponse("Hello! How can I help you?", "helper"));
 
         ChatRequest request = new ChatRequest();
         request.setPersonality("helper");
@@ -28,28 +29,25 @@ class ChatControllerTest {
         ResponseEntity<ChatResponse> response = chatController.chat(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Hej! Hur kan jag hjälpa dig?", response.getBody().getReply());
+        assertEquals("Hello! How can I help you?", response.getBody().getReply());
     }
 
     @Test
     void shouldReturnErrorOnServiceFailure() {
         when(chatService.processMessage(any(ChatRequest.class)))
-                .thenThrow(new RuntimeException("AI-tjänsten är nere"));
+                .thenThrow(new RuntimeException("AI-service is unavailable"));
 
         ChatRequest request = new ChatRequest();
         request.setPersonality("helper");
-        request.setMessage("Hej");
+        request.setMessage("Hello");
         request.setSessionId("test-123");
 
-        try {
-            chatController.chat(request);
-        } catch (RuntimeException e) {
-            assertEquals("AI-tjänsten är nere", e.getMessage());
-        }
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> chatController.chat(request));
+        assertEquals("AI-service is unavailable", ex.getMessage());
     }
 
     @Test
-    void shouldRetryOnAiServiceFailure() {
+    void shouldSucceedOnSubsequentCallAfterPriorFailure() {
         when(chatService.processMessage(any(ChatRequest.class)))
                 .thenThrow(new RuntimeException("503 Service Unavailable"))
                 .thenReturn(new ChatResponse("Response after retry!", "helper"));
@@ -59,14 +57,10 @@ class ChatControllerTest {
         request.setMessage("Test");
         request.setSessionId("retry-test");
 
-        try {
-            chatController.chat(request);
-        } catch (RuntimeException e) {
-            assertEquals("503 Service Unavailable", e.getMessage());
-        }
+        assertThrows(RuntimeException.class, () -> chatController.chat(request));
 
         ResponseEntity<ChatResponse> response = chatController.chat(request);
-        assertEquals(HttpStatus.OK,response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Response after retry!", response.getBody().getReply());
     }
 }

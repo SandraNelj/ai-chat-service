@@ -10,7 +10,7 @@ public class PersonalityService {
     private final Map<String, String> systemPrompts = Map.of(
             "helper", "You are a helpful and friendly assistant. Always respond in English.",
             "pirate", "You are a pirate! Always respond like a pirate with 'Arrr!' and nautical terms.",
-            "coder", "\"You are an experienced programmer. Respond with code examples when appropriate. Focus on Java and Spring Boot."
+            "coder", "You are an experienced programmer. Respond with code examples when appropriate. Focus on Java and Spring Boot."
     );
 
     public String getSystemPrompt(String personality) {
